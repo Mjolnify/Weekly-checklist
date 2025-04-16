@@ -12,17 +12,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background-color: #2d2424; /* Warm dark brown background */
-      color: #f5e6ca; /* Soft cream text */
+      background-color: #ffdbd5;
+      color: #f5e6ca;
       font-family: 'Montserrat', sans-serif;
     }
     .title-font {
       font-family: 'Quicksand', sans-serif;
       letter-spacing: 1.5px;
       font-weight: 600;
-      color: #e6ccb2; /* Soft golden beige for title */
+      color: #e6ccb2;
     }
-    /* Keep the grid layout intact */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -30,21 +29,21 @@
       width: 100%;
       position: relative;
     }
-    /* Fix text spacing - IMPORTANT CHANGE */
+
     .activity-text {
       word-break: break-word;
       font-size: 0.875rem;
       line-height: 1.25rem;
       overflow-wrap: break-word;
-      width: calc(100% - 20px); /* Allow space for delete button */
-      padding-right: 0; /* Remove right padding completely */
+      width: calc(100% - 20px);
+      padding-right: 0;
     }
-    /* Enhanced completed task styling */
+
     .completed-task {
       text-decoration: line-through;
       opacity: 0.6;
     }
-    /* Make activity container take full width */
+
     .activity-container {
       width: 100%;
       padding: 0.5rem 0.25rem;
@@ -53,14 +52,14 @@
       display: flex;
       align-items: flex-start;
     }
-    /* Checkbox styling */
+
     .activity-checkbox {
       min-width: 1rem;
       height: 1rem;
       margin-right: 0.25rem;
-      flex-shrink: 0; /* Prevent checkbox from shrinking */
+      flex-shrink: 0;
     }
-    /* Adjust delete button position */
+
     .delete-btn {
       opacity: 0;
       transition: opacity 0.2s ease;
@@ -75,7 +74,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ff6b6b; /* Soft red color for the X */
+      color: #ff6b6b;
       font-size: 0.75rem;
       flex-shrink: 0; /* Prevent delete button from shrinking */
     }
@@ -84,61 +83,60 @@
     .note-container:hover .delete-btn {
       opacity: 1;
     }
-    /* Note container styling */
+
     .note-container {
       position: relative;
       padding-right: 25px;
     }
-    /* Custom background for panels */
+
     .panel-bg {
-      background-color: #3f3232; /* Warm brownish gray */
+      background-color: #3f3232;
     }
-    /* Custom background for items */
+
     .item-bg {
-      background-color: #5c4033; /* Brown */
+      background-color: #5c4033;
     }
-    /* Current day highlight */
+   
     .current-day {
-      background-color: #7d5a50; /* Warm chestnut */
+      background-color: #7d5a50;
       color: #f5e6ca;
     }
-    /* Button styling */
+ 
     .btn-primary {
-      background-color: #a47551; /* Warm tan */
+      background-color: #a47551;
       color: #f5e6ca;
     }
     .btn-primary:hover {
-      background-color: #8b5a2b; /* Darker tan */
+      background-color: #8b5a2b;
     }
     .btn-secondary {
-      background-color: #7d5a50; /* Chestnut */
+      background-color: #7d5a50;
       color: #f5e6ca;
     }
     .btn-secondary:hover {
-      background-color: #6a4f45; /* Darker chestnut */
+      background-color: #6a4f45;
     }
     .btn-reset {
-      background-color: #5c4033; /* Brown */
+      background-color: #5c4033;
       color: #f5e6ca;
     }
     .btn-reset:hover {
-      background-color: #4a3328; /* Darker brown */
+      background-color: #4a3328;
     }
-    /* Input styling */
+ 
     .cozy-input {
-      background-color: #5c4033; /* Brown */
-      border: 1px solid #7d5a50; /* Chestnut border */
+      background-color: #5c4033;
+      border: 1px solid #7d5a50;
       color: #f5e6ca;
     }
     .cozy-input::placeholder {
-      color: #d4c3b8; /* Light tan placeholder */
+      color: #d4c3b8;
     }
-    /* Border highlight for current day */
+   
     .current-day-border {
-      border: 2px solid #a47551; /* Warm tan border */
+      border: 2px solid #a47551;
     }
     
-    /* New styles for current day column highlight */
     .day-column {
       position: relative;
       z-index: 1;
@@ -146,7 +144,7 @@
     
     .current-day-column-highlight {
       position: absolute;
-      background-color: rgba(229, 204, 175, 0.15); /* Lighter cream/tan color with transparency */
+      background-color: rgba(229, 204, 175, 0.15);
       border-radius: 0.5rem;
       z-index: 0;
     }
@@ -170,20 +168,18 @@
       const [selectedDay, setSelectedDay] = React.useState('Monday');
       const [currentTime, setCurrentTime] = React.useState(new Date());
       
-      // Note-taking state
+      //NOte taking spaceeeeeee
       const [noteInput, setNoteInput] = React.useState('');
       const [notesList, setNotesList] = React.useState(() => {
         const savedNotes = localStorage.getItem('weeklyNotesList');
         return savedNotes ? JSON.parse(savedNotes) : [];
       });
       
-      // Reference for the week grid
       const weekGridRef = React.useRef(null);
       
-      // Reference for the current day column
       const currentDayColumnRef = React.useRef(null);
       
-      // Update current time every minute instead of every second
+      // Update current time every minute NOT EVERY second
       React.useEffect(() => {
         const timer = setInterval(() => {
           setCurrentTime(new Date());
@@ -204,7 +200,6 @@
         day: 'numeric'
       });
       
-      // Format time to only show hours and minutes
       const formattedTime = currentTime.toLocaleTimeString(undefined, {
         hour: '2-digit',
         minute: '2-digit'
@@ -231,15 +226,12 @@
               const currentColumn = columnElements[currentDayArrayIndex];
               const columnRect = currentColumn.getBoundingClientRect();
               
-              // Get the day header element
               const dayHeaders = weekGridRef.current.querySelectorAll('.day-header');
               const currentDayHeader = dayHeaders[currentDayArrayIndex];
               const headerRect = currentDayHeader.getBoundingClientRect();
               
-              // Get the highlight element
               const highlight = document.getElementById('current-day-highlight');
               if (highlight) {
-                // Position the highlight with more padding at the top
                 highlight.style.left = `${columnRect.left - gridRect.left - 4}px`;
                 highlight.style.top = `-8px`; // More padding at the top
                 highlight.style.width = `${columnRect.width + 8}px`; // Slightly wider
@@ -260,7 +252,6 @@
         };
       }, [currentDayArrayIndex, activities]);
       
-      // Handle adding a new note
       const handleAddNote = (e) => {
         e.preventDefault();
         if (!noteInput.trim()) return;
@@ -274,12 +265,12 @@
         setNoteInput('');
       };
       
-      // Delete a note
+      // FOR deleting A noTe
       const deleteNote = (id) => {
         setNotesList(notesList.filter(note => note.id !== id));
       };
       
-      // Add a new activity to specific day
+      // Add a new activity to a specific day
       const handleAddActivity = () => {
         if (!newActivity.trim()) return;
         
@@ -347,7 +338,7 @@
         });
       };
       
-      // Delete an activity
+      // Delete an activity!!!
       const deleteActivity = (day, id) => {
         setActivities(prev => {
           const updatedActivities = { ...prev };
@@ -395,9 +386,9 @@
         <div className="p-4 max-w-full mx-auto h-screen">
           <h1 className="text-3xl mb-6 text-center title-font">Weekly Checklist</h1>
           
-          {/* Three-column layout with full height */}
+          {}
           <div className="flex flex-col lg:flex-row gap-4 h-5/6">
-            {/* Left column - Notes (full height) */}
+            {}
             <div className="lg:w-1/4 p-4 panel-bg rounded-lg shadow h-full flex flex-col">
               <h2 className="text-lg font-bold mb-4 text-amber-200">Notes</h2>
               <form onSubmit={handleAddNote} className="mb-4">
@@ -433,9 +424,9 @@
               </div>
             </div>
             
-            {/* Middle column - Weekly Schedule (full height) */}
+            {}
             <div className="lg:w-2/4 panel-bg p-4 rounded-lg shadow h-full flex flex-col">
-              {/* Add activity form */}
+              {}
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
                 <input
                   type="text"
@@ -478,16 +469,16 @@
                 </button>
               </div>
               
-              {/* Weekly grid - using CSS grid */}
+              {}
               <div className="overflow-x-auto flex-grow">
                 <div className="week-grid" ref={weekGridRef}>
-                  {/* Current day column highlight */}
+                  {}
                   <div 
                     id="current-day-highlight"
                     className="current-day-column-highlight"
                   ></div>
                   
-                  {/* Headers */}
+                  {}
                   {daysOfWeek.map((day) => (
                     <div 
                       key={day} 
@@ -497,7 +488,7 @@
                     </div>
                   ))}
                   
-                  {/* Activity columns - NO INDIVIDUAL SCROLLBARS */}
+                  {}
                   {daysOfWeek.map((day, index) => (
                     <div 
                       key={day} 
@@ -538,7 +529,7 @@
               </div>
             </div>
             
-            {/* Right column - Date and Time (full height) */}
+            {}
             <div className="lg:w-1/4 h-full">
               <div className="panel-bg p-6 rounded-lg shadow h-full flex flex-col justify-start">
                 <div className="text-2xl font-bold text-amber-200 mb-2">{formattedDate}</div>
