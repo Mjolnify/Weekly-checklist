@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Checklist</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.18.13/babel.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #2d2424; /* Warm dark brown background */
+      color: #f5e6ca; /* Soft cream text */
+      font-family: 'Montserrat', sans-serif;
+    }
+    .title-font {
+      font-family: 'Quicksand', sans-serif;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      color: #e6ccb2; /* Soft golden beige for title */
+    }
+    /* Keep the grid layout intact */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      width: 100%;
+      position: relative;
+    }
+    /* Fix text spacing - IMPORTANT CHANGE */
+    .activity-text {
+      word-break: break-word;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      overflow-wrap: break-word;
+      width: calc(100% - 20px); /* Allow space for delete button */
+      padding-right: 0; /* Remove right padding completely */
+    }
+    /* Enhanced completed task styling */
+    .completed-task {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    /* Make activity container take full width */
+    .activity-container {
+      width: 100%;
+      padding: 0.5rem 0.25rem;
+      margin-bottom: 0.25rem;
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+    }
+    /* Checkbox styling */
+    .activity-checkbox {
+      min-width: 1rem;
+      height: 1rem;
+      margin-right: 0.25rem;
+      flex-shrink: 0; /* Prevent checkbox from shrinking */
+    }
+    /* Adjust delete button position */
+    .delete-btn {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff6b6b; /* Soft red color for the X */
+      font-size: 0.75rem;
+      flex-shrink: 0; /* Prevent delete button from shrinking */
+    }
+    /* Show delete buttons on hover */
+    .activity-container:hover .delete-btn,
+    .note-container:hover .delete-btn {
+      opacity: 1;
+    }
+    /* Note container styling */
+    .note-container {
+      position: relative;
+      padding-right: 25px;
+    }
+    /* Custom background for panels */
+    .panel-bg {
+      background-color: #3f3232; /* Warm brownish gray */
+    }
+    /* Custom background for items */
+    .item-bg {
+      background-color: #5c4033; /* Brown */
+    }
+    /* Current day highlight */
+    .current-day {
+      background-color: #7d5a50; /* Warm chestnut */
+      color: #f5e6ca;
+    }
+    /* Button styling */
+    .btn-primary {
+      background-color: #a47551; /* Warm tan */
+      color: #f5e6ca;
+    }
+    .btn-primary:hover {
+      background-color: #8b5a2b; /* Darker tan */
+    }
+    .btn-secondary {
+      background-color: #7d5a50; /* Chestnut */
+      color: #f5e6ca;
+    }
+    .btn-secondary:hover {
+      background-color: #6a4f45; /* Darker chestnut */
+    }
+    .btn-reset {
+      background-color: #5c4033; /* Brown */
+      color: #f5e6ca;
+    }
+    .btn-reset:hover {
+      background-color: #4a3328; /* Darker brown */
+    }
+    /* Input styling */
+    .cozy-input {
+      background-color: #5c4033; /* Brown */
+      border: 1px solid #7d5a50; /* Chestnut border */
+      color: #f5e6ca;
+    }
+    .cozy-input::placeholder {
+      color: #d4c3b8; /* Light tan placeholder */
+    }
+    /* Border highlight for current day */
+    .current-day-border {
+      border: 2px solid #a47551; /* Warm tan border */
+    }
+    
+    /* New styles for current day column highlight */
+    .day-column {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .current-day-column-highlight {
+      position: absolute;
+      background-color: rgba(229, 204, 175, 0.15); /* Lighter cream/tan color with transparency */
+      border-radius: 0.5rem;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const WeeklyChecklist = () => {
+      // Get days of the week
+      const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      
+      // Initialize state from localStorage or empty structure
+      const [activities, setActivities] = React.useState(() => {
+        const savedActivities = localStorage.getItem('weeklyActivities');
+        return savedActivities ? JSON.parse(savedActivities) : {};
+      });
+      
+      const [newActivity, setNewActivity] = React.useState('');
+      const [selectedDay, setSelectedDay] = React.useState('Monday');
+      const [currentTime, setCurrentTime] = React.useState(new Date());
+      
+      // Note-taking state
+      const [noteInput, setNoteInput] = React.useState('');
+      const [notesList, setNotesList] = React.useState(() => {
+        const savedNotes = localStorage.getItem('weeklyNotesList');
+        return savedNotes ? JSON.parse(savedNotes) : [];
+      });
+      
+      // Reference for the week grid
+      const weekGridRef = React.useRef(null);
+      
+      // Reference for the current day column
+      const currentDayColumnRef = React.useRef(null);
+      
+      // Update current time every minute instead of every second
+      React.useEffect(() => {
+        const timer = setInterval(() => {
+          setCurrentTime(new Date());
+        }, 60000); // 60000ms = 1 minute
+        return () => clearInterval(timer);
+      }, []);
+      
+      // Get current day of week (0 = Sunday, 1 = Monday, etc.)
+      const currentDayIndex = currentTime.getDay();
+      // Convert to our array index (where Monday is 0)
+      const currentDayArrayIndex = currentDayIndex === 0 ? 6 : currentDayIndex - 1;
+      const currentDayName = daysOfWeek[currentDayArrayIndex];
+      
+      // Format date and time - without year
+      const formattedDate = currentTime.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // Format time to only show hours and minutes
+      const formattedTime = currentTime.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Save to localStorage whenever activities change
+      React.useEffect(() => {
+        localStorage.setItem('weeklyActivities', JSON.stringify(activities));
+      }, [activities]);
+      
+      // Save notes to localStorage
+      React.useEffect(() => {
+        localStorage.setItem('weeklyNotesList', JSON.stringify(notesList));
+      }, [notesList]);
+      
+      // Update the highlight position when the grid is rendered or window is resized
+      React.useEffect(() => {
+        function updateHighlightPosition() {
+          if (weekGridRef.current && currentDayColumnRef.current) {
+            const gridRect = weekGridRef.current.getBoundingClientRect();
+            const columnElements = weekGridRef.current.querySelectorAll('.day-column');
+            
+            if (columnElements && columnElements.length > currentDayArrayIndex) {
+              const currentColumn = columnElements[currentDayArrayIndex];
+              const columnRect = currentColumn.getBoundingClientRect();
+              
+              // Get the day header element
+              const dayHeaders = weekGridRef.current.querySelectorAll('.day-header');
+              const currentDayHeader = dayHeaders[currentDayArrayIndex];
+              const headerRect = currentDayHeader.getBoundingClientRect();
+              
+              // Get the highlight element
+              const highlight = document.getElementById('current-day-highlight');
+              if (highlight) {
+                // Position the highlight with more padding at the top
+                highlight.style.left = `${columnRect.left - gridRect.left - 4}px`;
+                highlight.style.top = `-8px`; // More padding at the top
+                highlight.style.width = `${columnRect.width + 8}px`; // Slightly wider
+                highlight.style.height = `${gridRect.height + 12}px`; // Extend height to account for top padding
+              }
+            }
+          }
+        }
+        
+        // Initial update
+        updateHighlightPosition();
+        
+        // Update on window resize
+        window.addEventListener('resize', updateHighlightPosition);
+        
+        return () => {
+          window.removeEventListener('resize', updateHighlightPosition);
+        };
+      }, [currentDayArrayIndex, activities]);
+      
+      // Handle adding a new note
+      const handleAddNote = (e) => {
+        e.preventDefault();
+        if (!noteInput.trim()) return;
+        
+        const newNote = {
+          id: Date.now(),
+          text: noteInput
+        };
+        
+        setNotesList([...notesList, newNote]);
+        setNoteInput('');
+      };
+      
+      // Delete a note
+      const deleteNote = (id) => {
+        setNotesList(notesList.filter(note => note.id !== id));
+      };
+      
+      // Add a new activity to specific day
+      const handleAddActivity = () => {
+        if (!newActivity.trim()) return;
+        
+        setActivities(prev => {
+          const updatedActivities = { ...prev };
+          
+          if (!updatedActivities[selectedDay]) {
+            updatedActivities[selectedDay] = [];
+          }
+          
+          updatedActivities[selectedDay].push({
+            id: Date.now(),
+            text: newActivity,
+            completed: false
+          });
+          
+          return updatedActivities;
+        });
+        
+        setNewActivity('');
+      };
+      
+      // Add activity to all days
+      const handleAddToAllDays = () => {
+        if (!newActivity.trim()) return;
+        
+        setActivities(prev => {
+          const updatedActivities = { ...prev };
+          const timestamp = Date.now();
+          
+          daysOfWeek.forEach((day, index) => {
+            if (!updatedActivities[day]) {
+              updatedActivities[day] = [];
+            }
+            
+            updatedActivities[day].push({
+              id: timestamp + index, // Add index to ensure unique IDs
+              text: newActivity,
+              completed: false
+            });
+          });
+          
+          return updatedActivities;
+        });
+        
+        setNewActivity('');
+      };
+      
+      // Toggle completion status
+      const toggleComplete = (day, id) => {
+        setActivities(prev => {
+          const updatedActivities = { ...prev };
+          const dayActivities = [...(updatedActivities[day] || [])];
+          
+          const activityIndex = dayActivities.findIndex(activity => activity.id === id);
+          if (activityIndex !== -1) {
+            dayActivities[activityIndex] = {
+              ...dayActivities[activityIndex],
+              completed: !dayActivities[activityIndex].completed
+            };
+          }
+          
+          updatedActivities[day] = dayActivities;
+          return updatedActivities;
+        });
+      };
+      
+      // Delete an activity
+      const deleteActivity = (day, id) => {
+        setActivities(prev => {
+          const updatedActivities = { ...prev };
+          
+          if (updatedActivities[day]) {
+            updatedActivities[day] = updatedActivities[day].filter(activity => activity.id !== id);
+          }
+          
+          return updatedActivities;
+        });
+      };
+      
+      // Reset all completed activities for the week
+      const resetWeek = () => {
+        const confirmed = confirm("Reset all checked items for the week?");
+        if (confirmed) {
+          setActivities(prev => {
+            const updatedActivities = { ...prev };
+            
+            Object.keys(updatedActivities).forEach(day => {
+              if (updatedActivities[day]) {
+                updatedActivities[day] = updatedActivities[day].map(activity => ({
+                  ...activity,
+                  completed: false
+                }));
+              }
+            });
+            
+            return updatedActivities;
+          });
+        }
+      };
+      
+      // Calculate the maximum number of activities in any day to keep columns uniform
+      const maxActivities = React.useMemo(() => {
+        let max = 0;
+        daysOfWeek.forEach(day => {
+          const count = activities[day]?.length || 0;
+          if (count > max) max = count;
+        });
+        return max;
+      }, [activities, daysOfWeek]);
+      
+      return (
+        <div className="p-4 max-w-full mx-auto h-screen">
+          <h1 className="text-3xl mb-6 text-center title-font">Weekly Checklist</h1>
+          
+          {/* Three-column layout with full height */}
+          <div className="flex flex-col lg:flex-row gap-4 h-5/6">
+            {/* Left column - Notes (full height) */}
+            <div className="lg:w-1/4 p-4 panel-bg rounded-lg shadow h-full flex flex-col">
+              <h2 className="text-lg font-bold mb-4 text-amber-200">Notes</h2>
+              <form onSubmit={handleAddNote} className="mb-4">
+                <div className="flex">
+                  <input
+                    type="text"
+                    value={noteInput}
+                    onChange={(e) => setNoteInput(e.target.value)}
+                    placeholder="Add a note and press Enter..."
+                    className="flex-grow p-2 rounded-l cozy-input"
+                  />
+                  <button 
+                    type="submit"
+                    className="btn-primary px-4 py-2 rounded-r"
+                  >
+                    Add
+                  </button>
+                </div>
+              </form>
+              
+              <div className="overflow-y-auto flex-grow space-y-3">
+                {notesList.map(note => (
+                  <div key={note.id} className="note-container flex items-center p-3 item-bg rounded">
+                    <div className="flex-grow">{note.text}</div>
+                    <button 
+                      onClick={() => deleteNote(note.id)}
+                      className="delete-btn"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Middle column - Weekly Schedule (full height) */}
+            <div className="lg:w-2/4 panel-bg p-4 rounded-lg shadow h-full flex flex-col">
+              {/* Add activity form */}
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newActivity}
+                  onChange={(e) => setNewActivity(e.target.value)}
+                  placeholder="Add new activity..."
+                  className="flex-grow p-2 rounded cozy-input"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddActivity()}
+                />
+                
+                <select 
+                  value={selectedDay} 
+                  onChange={(e) => setSelectedDay(e.target.value)}
+                  className="p-2 rounded cozy-input"
+                >
+                  {daysOfWeek.map(day => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
+                
+                <button 
+                  onClick={handleAddActivity}
+                  className="btn-primary px-4 py-2 rounded"
+                >
+                  Add
+                </button>
+                
+                <button 
+                  onClick={handleAddToAllDays}
+                  className="btn-secondary px-4 py-2 rounded"
+                >
+                  Add to All Days
+                </button>
+                
+                <button 
+                  onClick={resetWeek}
+                  className="btn-reset px-4 py-2 rounded"
+                >
+                  Reset Week
+                </button>
+              </div>
+              
+              {/* Weekly grid - using CSS grid */}
+              <div className="overflow-x-auto flex-grow">
+                <div className="week-grid" ref={weekGridRef}>
+                  {/* Current day column highlight */}
+                  <div 
+                    id="current-day-highlight"
+                    className="current-day-column-highlight"
+                  ></div>
+                  
+                  {/* Headers */}
+                  {daysOfWeek.map((day) => (
+                    <div 
+                      key={day} 
+                      className={`p-2 font-bold text-center rounded day-header ${day === currentDayName ? 'current-day' : 'item-bg'}`}
+                    >
+                      {day}
+                    </div>
+                  ))}
+                  
+                  {/* Activity columns - NO INDIVIDUAL SCROLLBARS */}
+                  {daysOfWeek.map((day, index) => (
+                    <div 
+                      key={day} 
+                      ref={day === currentDayName ? currentDayColumnRef : null}
+                      className={`p-2 rounded item-bg day-column ${day === currentDayName ? 'current-day-border' : ''}`}
+                      style={{ 
+                        minHeight: maxActivities > 0 ? `${Math.max(80, maxActivities * 40)}px` : '80px'
+                      }}
+                    >
+                      {activities[day]?.length > 0 ? (
+                        <ul className="space-y-1 w-full">
+                          {activities[day].map(activity => (
+                            <li key={activity.id} className="activity-container bg-opacity-70 bg-gray-700 rounded">
+                              <input
+                                type="checkbox"
+                                checked={activity.completed}
+                                onChange={() => toggleComplete(day, activity.id)}
+                                className="activity-checkbox mt-1"
+                              />
+                              <span className={`activity-text ${activity.completed ? "completed-task text-gray-400" : ""}`}>
+                                {activity.text}
+                              </span>
+                              <button 
+                                onClick={() => deleteActivity(day, activity.id)}
+                                className="delete-btn"
+                              >
+                                ✕
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-amber-100 text-opacity-60 text-center mt-4">No activities</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Right column - Date and Time (full height) */}
+            <div className="lg:w-1/4 h-full">
+              <div className="panel-bg p-6 rounded-lg shadow h-full flex flex-col justify-start">
+                <div className="text-2xl font-bold text-amber-200 mb-2">{formattedDate}</div>
+                <div className="text-xl text-amber-100">{formattedTime}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<WeeklyChecklist />, document.getElementById('root'));
+  </script>
+</body>
+</html>
